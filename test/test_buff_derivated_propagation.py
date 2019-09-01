@@ -53,23 +53,34 @@ def equipment_to_player_propagation(equipment):
 
 class Test_Buff_Propagation_With_Derivation(unittest.TestCase):
 
-	def test_propagating_a_derivation_buff(self):
+	"""
+	A derivated propagation is when a source buffable will propagate part of his own attributes to a
+	propagation target. For instance a buffable that has 100 HP, propagating 50% of this value (50 HP)
+	as a flat modifier to his propagation targets DEF attribute.
+	"""
+
+	"""
+	def test_derivating_the_propagated_value(self):
 		player = Player()
 		player.attributes[Attributes.ATK] = 200
 
 		equipment = Equipment()
+		equipment.attributes[Attributes.ATK] = 100
 		equipment.owner = player
 
 		# 50% of equipment attack goes to player DEF
-		equipment_buff_2 = BuffBuilder().modify("%", 0.5, Attributes.ATK).to_attribute(Attributes.DEF)\
-			.propagates_to(Player).build()
+		equipment_buff_2 = BuffBuilder().modify("%", 0.5, Attributes.ATK)\
+			.propagates_to_attribute(Attributes.DEF).propagates_to(Player).build()
 		add_buff(equipment, equipment_buff_2, CompleteBuildingEvent())
 
-		# 50% of the PLAYER ATK (100) should have gone to player DEF
-		assert player.attributes[Attributes.DEF] == 100
+		# Atk should not be modified
+		assert player.attributes[Attributes.ATK] == 200
+
+		# 50% of the EQUIPMENT ATK (100) should have gone to player DEF
+		assert player.attributes[Attributes.DEF] == equipment.attributes[Attributes.ATK] * 0.5
 
 		# Equipment should not be affected
-		assert equipment.attributes[Attributes.ATK] == 0
+		assert equipment.attributes[Attributes.ATK] == 100
 		assert equipment.attributes[Attributes.DEF] == 0
 
 		# Derivation should be stored in the target, not the propagator
@@ -81,39 +92,42 @@ class Test_Buff_Propagation_With_Derivation(unittest.TestCase):
 		player.attributes[Attributes.ATK] = 200
 
 		equipment = Equipment()
+		equipment.attributes[Attributes.ATK] = 100
 		equipment.owner = player
 
 		# 50% of equipment attack goes to player DEF
-		equipment_buff_2 = BuffBuilder().modify("%", 0.5, Attributes.ATK).to_attribute(Attributes.DEF) \
-			.propagates_to(Player).build()
+		equipment_buff_2 = BuffBuilder().modify("%", 0.5, Attributes.ATK) \
+			.propagates_to_attribute(Attributes.DEF).propagates_to(Player).build()
 		add_buff(equipment, equipment_buff_2, CompleteBuildingEvent())
 
-		# 50% of the PLAYER ATK (100) should have gone to player DEF
-		assert player.attributes[Attributes.DEF] == 100
+		# 50% of the EQUIPMENT ATK (100) should have gone to player DEF
+		assert player.attributes[Attributes.DEF] == equipment.attributes[Attributes.ATK] * 0.5
 
-		# If we remove the propagation source, the propagation target should be affected
+		# If we remove the propagation source, the propagation targets attributes needs to be updated
 		remove_buff(equipment, equipment_buff_2.buff_id)
 		assert player.attributes[Attributes.DEF] == 0
+	"""
 
-	def test_changing_propagation_source_affecting_propagation_target(self):
+	def test_increasing_propagation_source_attribute_repropagates_derivation(self):
 		player = Player()
-		player.attributes[Attributes.ATK] = 100
+		player.attributes[Attributes.ATK] = 200
 
 		equipment = Equipment()
+		equipment.attributes[Attributes.ATK] = 100
 		equipment.owner = player
 
-		# Equipment buff that 50% of player ATK goes to player DEF
+		# 50% of equipment attack goes to player DEF
 		equipment_buff_2 = BuffBuilder().modify("%", 0.5, Attributes.ATK) \
-			.propagates_to(Player).to_attribute(Attributes.DEF).build()
+			.propagates_to_attribute(Attributes.DEF).propagates_to(Player).build()
 		add_buff(equipment, equipment_buff_2, CompleteBuildingEvent())
 
-		# 50% of the player ATK (100) should have gone to player DEF
-		assert player.attributes[Attributes.DEF] == 50
+		# 50% of the EQUIPMENT ATK (100) should have gone to player DEF
+		assert equipment.attributes[Attributes.ATK] == 100
+		assert player.attributes[Attributes.DEF] == equipment.attributes[Attributes.ATK] * 0.5
 
-		# Changing +100 ATK to player after propagating the derivation, should propagate another 50 to player DEF
-		more_atk_buff = BuffBuilder().modify("+", 100, Attributes.ATK).build()
-		add_buff(player, more_atk_buff, CompleteBuildingEvent())
+		# +100 to Equipment ATTACK, it should propagate 50% of it to player DEF
+		equipment_buff_3 = BuffBuilder().modify("+", 100, Attributes.ATK).build()
+		add_buff(equipment, equipment_buff_3, CompleteBuildingEvent())
 
-		# more 50% of the total attack that is 200 now should be propagated to player DEF
-		assert player.attributes[Attributes.DEF] == 100
-
+		assert equipment.attributes[Attributes.ATK] == 200
+		assert player.attributes[Attributes.DEF] == equipment.attributes[Attributes.ATK] * 0.5

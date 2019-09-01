@@ -37,6 +37,7 @@ class Test_3_Buffs(unittest.TestCase):
 
 		# Since it has no triggers or conditions, it was added automatically
 		assert buffable.attributes[Attributes.DEF] == 30
+		assert buff.buff_id in buffable.active_buffs
 
 	def test_removing_buff(self):
 		buffable = Buffable()
@@ -76,7 +77,7 @@ class Test_3_Buffs(unittest.TestCase):
 
 		buff = BuffSpec()
 		buff.activation_triggers = []  # no triggers
-		buff.conditions = []  # no conditions
+		buff.conditions = []  		   # no conditions
 		buff.modifiers = [
 			Modifier("+", 50, Attributes.DEF),
 			Modifier("+", 50, Attributes.DEF),

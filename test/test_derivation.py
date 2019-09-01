@@ -54,7 +54,6 @@ def equipment_to_player_propagation(equipment):
 
 class Test_Buff_Derivations(unittest.TestCase):
 
-	"""
 	def test_simple_derivation(self):
 		buffable = Buffable()
 		buffable.attributes[Attributes.ATK] = 100
@@ -70,8 +69,8 @@ class Test_Buff_Derivations(unittest.TestCase):
 		assert buff.buff_id in buffable.active_buffs
 
 		# Checking the derivation has been registered
-		assert list(buffable.attributes.get_data(Attributes.ATK).derivations.keys())[0] == Attributes.ATK
-
+		asd = buffable.attributes.get_data(Attributes.ATK).derivations
+		assert list(buffable.attributes.get_data(Attributes.ATK).derivations.keys())[0] == Attributes.DEF
 
 	def test_derivation_debug_history(self):
 		buffable = Buffable()
@@ -97,9 +96,8 @@ class Test_Buff_Derivations(unittest.TestCase):
 		event_chain = last_modification.source_event.get_event_chain()
 		assert isinstance(event_chain[0], AddBuffEvent)
 		assert isinstance(event_chain[1], CompleteBuildingEvent)
-	"""
 
-	def test_changing_source_attribute_affecting_derivated_attribute(self):
+	def test_changing_source_attribute_affects_derivated_attribute(self):
 		buffable = Buffable()
 		buffable.attributes[Attributes.ATK] = 100
 
@@ -114,7 +112,7 @@ class Test_Buff_Derivations(unittest.TestCase):
 		# Now we add +100 attack to the player, his 50% buff instead of giving 50 def should give 100 def
 		buff_2 = BuffBuilder().modify("+", 100, Attributes.ATK).build()
 		add_buff(buffable, buff_2, CompleteBuildingEvent())
-		"""
+
 		# Player defense should be updated as his attack increased
 		assert buffable.attributes[Attributes.DEF] == 100
 		assert buffable.attributes[Attributes.ATK] == 200
@@ -125,4 +123,26 @@ class Test_Buff_Derivations(unittest.TestCase):
 		# Player should have got 50% of his atk (50) to def as it should be derivating from 100 atk again
 		assert buffable.attributes[Attributes.DEF] == 50
 		assert buffable.attributes[Attributes.ATK] == 100
-		"""
+
+	def test_removing_derivation_buff_updates_derivated_attributes(self):
+		buffable = Buffable()
+		buffable.attributes[Attributes.ATK] = 100
+		buffable.attributes[Attributes.DEF] = 100
+
+		# Simple buff that 50% of your attack goes to your def
+		buff = BuffBuilder().modify("%", 0.5, Attributes.ATK).to_attribute(Attributes.DEF).build()
+		add_buff(buffable, buff, CompleteBuildingEvent())
+
+		# 50% of your def, goes to your HP
+		buff_2 = BuffBuilder().modify("%", 0.5, Attributes.DEF).to_attribute(Attributes.HP).build()
+		add_buff(buffable, buff_2, CompleteBuildingEvent())
+
+		# Player defense should be updated as his attack increased
+		assert buffable.attributes[Attributes.DEF] == 150
+		assert buffable.attributes[Attributes.HP] == 75
+
+		remove_buff(buffable, buff.buff_id)
+
+		assert buffable.attributes[Attributes.DEF] == 100
+		assert buffable.attributes[Attributes.HP] == 50
+

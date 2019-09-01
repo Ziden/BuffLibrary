@@ -19,6 +19,10 @@ class BuffBuilder():
         self.buff_spec.to_attribute = attribute
         return self
 
+    def propagates_to_attribute(self, attribute):
+        self.buff_spec.propagates_to_attribute = attribute
+        return self
+
     def just_if(self, condition):
         self.buff_spec.conditions.append(condition)
         return self

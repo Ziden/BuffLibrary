@@ -42,15 +42,31 @@ class TriggerType(object):
 class BuffSpec(object):
 	def __init__(self, spec_id=None, name=None):
 		self.buff_id = spec_id or buffspecs.IDGen.next()
+
+		# Changes this buff will apply
 		self.modifiers = []
+
+		# Condition strings for the activation triggers
 		self.conditions = []
+
+		# Triggers to activate/deactivate or propagate the buff
 		self.activation_triggers = []
 		self.deactivation_triggers = []
 		self.propagation_triggers = []
+
+		# Derivate the modifiers into an attribute of the buffable (IE 50% atk goes to DEF)
 		self.to_attribute = None
+
+		# Derivate the modifiers from attribute of the propagator to the propagated target
+		# IE 50% of source buffable atk goes to destination buffable DEF
 		self.propagates_to_attribute = None
+
+		# Buffable class names this buff can propagate to
 		self.propagates_to = []
+
+		# Conditions that shall be met for the propagation to happen
 		self.propagation_conditions = []
+
 		self.name = name
 		buffspecs.register_buff(self)
 
@@ -67,14 +83,13 @@ class BuffSpec(object):
 
 	def get_remove_triggers(self):
 		if len(self.conditions) > 0 and len(self.deactivation_triggers) == 0:
-			return self.activation_triggers # if i have conditions by default my remove trigger is the activation trigger
+			return self.activation_triggers  # if i have conditions by default my remove trigger is the activation trigger
 		return self.deactivation_triggers
 
 	def get_triggers(self):
 		if len(self.activation_triggers) == 0:
 			return ["AddBuffEvent"]
 		return self.activation_triggers
-		#return self.activation_triggers + ["AddBuffEvent"] # Default trigger, buff is triggered as soon its adde
 
 	def get_propagation_triggers(self):
 		if len(self.propagation_triggers) == 0:
@@ -87,8 +102,16 @@ class BuffModification(object):
 		self.id = uuid.uuid1()
 		self.buff_id = buff_id
 		self.source_event = source_event
+
+		# Modifier configured in specs
 		self.modifier = modifier
+
+		# In derivation , a derivated modifier is generated with a flat 'add' value of the final derivated value
 		self.derivated_modifier = derivated_modifier
+
+	@property
+	def applied_modifier(self):
+		return self.derivated_modifier or self.modifier
 
 
 class ActiveBuff(object):
@@ -106,8 +129,11 @@ class BuffCondition(object):
 class Buffable(object):
 	def __init__(self):
 		self.id = 0  # your game identification
+
 		self.attributes = BuffableAttributes()
+
 		self.active_buffs = {}
+
 		self.activation_triggers = defaultdictlist()
 		self.deactivation_triggers = defaultdictlist()
 		self.propagation_triggers = defaultdictlist()

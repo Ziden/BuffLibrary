@@ -2,7 +2,7 @@ import buffspecs
 
 from test.test_data.buff_builder import BuffBuilder
 
-from controller import call_event, add_buff, pull_propagated_buffs
+from controller import call_event, add_buff, pull_propagated_buffs, remove_buff
 from models import Buffable, BuffSpec, Modifier, BuffEvent, BuffModification, BuffPropagatedEvent, AddBuffEvent
 
 
@@ -74,6 +74,43 @@ class Test_Buff_Propagation(unittest.TestCase):
 		# However even tho the castle has this buff as active, since its not a target it did not change ATK
 		assert castle.attributes[Attributes.ATK] == 0
 
+	def test_propagation_also_modifyng_source(self):
+		player = Player()
+		player.attributes[Attributes.ATK] = 100
+
+		castle = Castle()
+		castle.players.append(player)
+
+		# A global castle buff of +50 ATK but also affects the castle
+		castle_buff = BuffBuilder().modify("+", 50, Attributes.ATK)\
+			.propagates_to(Player, Castle).build()
+
+		add_buff(castle, castle_buff, CompleteBuildingEvent())
+
+		# The buff should be active in the owner and target
+		assert castle_buff.buff_id in castle.active_buffs
+		assert castle_buff.buff_id in player.active_buffs
+
+		# Since castle buffs are propagated to the players in that castle, the player should have got +50% ATK
+		assert player.attributes[Attributes.ATK] == 150
+		# However even tho the castle has this buff as active, since its not a target it did not change ATK
+		assert castle.attributes[Attributes.ATK] == 50
+
+	def test_removing_propagation(self):
+		player = Player()
+		player.attributes[Attributes.ATK] = 100
+
+		castle_buff = BuffBuilder().modify("%", 0.5, Attributes.ATK).propagates_to(Player).build()
+
+		castle = Castle()
+		castle.players.append(player)
+
+		add_buff(castle, castle_buff, CompleteBuildingEvent())
+		assert player.attributes[Attributes.ATK] == 150
+
+		remove_buff(castle, castle_buff.buff_id)
+		assert player.attributes[Attributes.ATK] == 100
+
 	def test_propagation_debug_tracking(self):
 		player = Player()
 		player.attributes[Attributes.ATK] = 100
@@ -121,13 +158,15 @@ class Test_Buff_Propagation(unittest.TestCase):
 
 		# A global castle buff of 50% ATK
 		castle_buff = BuffBuilder().modify("%", 0.5, Attributes.ATK).propagates_to(Player).build()
-		equipment_buff = BuffBuilder().modify("%", 0.5, Attributes.ATK).propagates_to(Player).build()
+		# Equipment buff of 100% bonus atk
+		equipment_buff = BuffBuilder().modify("%", 1, Attributes.ATK).propagates_to(Player).build()
 
 		add_buff(castle, castle_buff, CompleteBuildingEvent())
 		add_buff(equipment, equipment_buff, CompleteBuildingEvent())
 
 		assert len(player.active_buffs) == 2
-		assert player.attributes[Attributes.ATK] == 200
+		# flat bonus = 100, 250% total bonus from propagations, so 250 final value
+		assert player.attributes[Attributes.ATK] == 250
 
 	def test_propating_two_targets(self):
 		player = Player()
