@@ -1,28 +1,23 @@
 import buffspecs
 
 from test.test_data.buff_builder import BuffBuilder
+from test.test_data.specs import CompleteBuildingEvent, FartEvent
 
-from buffs.controller import call_event, add_buff, remove_buff
+from buffs.api import call_event, add_buff, remove_buff
 from buffs.models import Buffable, BuffSpec, Modifier, BuffEvent
 
-from test.test_data.test_specs import (
+from test.test_data.specs import (
 	Attributes
 )
 
 import unittest
 
 
-class CompleteBuildingEvent(BuffEvent):
-	def __init__(self):
-		super(CompleteBuildingEvent, self).__init__(self)
-
-
-class FartEvent(BuffEvent):
-	def __init__(self, buffable):
-		super(FartEvent, self).__init__(buffable)
-
 
 class Test_3_Buffs(unittest.TestCase):
+
+	def setUp(self):
+		buffspecs.clear()
 
 	def test_adding_buff(self):
 		buffable = Buffable()

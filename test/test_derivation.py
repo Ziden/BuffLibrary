@@ -1,58 +1,22 @@
 import buffspecs
 
 from test.test_data.buff_builder import BuffBuilder
+from test.test_data.specs import CompleteBuildingEvent
 
-from controller import call_event, add_buff, remove_buff
+from api import call_event, add_buff, remove_buff
 from models import Buffable, BuffSpec, Modifier, BuffEvent, BuffModification, AddBuffEvent
 
 
-from test.test_data.test_specs import (
+from test.test_data.specs import (
 	Attributes
 )
 
 import unittest
 
-
-class CompleteBuildingEvent(BuffEvent):
-	def __init__(self):
-		super(CompleteBuildingEvent, self).__init__(self)
-
-
-class RecruitPlayerEvent(BuffEvent):
-	def __init__(self, buffable):
-		super(RecruitPlayerEvent, self).__init__(buffable)
-
-
-class Castle(Buffable):
-	def __init__(self):
-		super(Castle, self).__init__()
-		self.players = []
-
-
-class Player(Buffable):
-	def __init__(self):
-		super(Player, self).__init__()
-		self.equipments = []
-		self.castle = None
-
-
-class Equipment(Buffable):
-	def __init__(self):
-		super(Equipment, self).__init__()
-		self.owner = None
-
-
-@buffspecs.AddPropagation(Castle, Player)
-def castle_to_player_propagation(player_castle):
-	return player_castle.players
-
-
-@buffspecs.AddPropagation(Equipment, Player)
-def equipment_to_player_propagation(equipment):
-	return [equipment.owner]
-
-
 class Test_Buff_Derivations(unittest.TestCase):
+
+	def setUp(self):
+		buffspecs.clear()
 
 	def test_simple_derivation(self):
 		buffable = Buffable()
@@ -60,7 +24,6 @@ class Test_Buff_Derivations(unittest.TestCase):
 
 		# Simple buff that 50% of your attack goes to your def
 		buff = BuffBuilder().modify("%", 0.5, Attributes.ATK).to_attribute(Attributes.DEF).build()
-
 		add_buff(buffable, buff, CompleteBuildingEvent())
 
 		# Player should have got 50% of his atk (50) to def
@@ -69,7 +32,6 @@ class Test_Buff_Derivations(unittest.TestCase):
 		assert buff.buff_id in buffable.active_buffs
 
 		# Checking the derivation has been registered
-		asd = buffable.attributes.get_data(Attributes.ATK).derivations
 		assert list(buffable.attributes.get_data(Attributes.ATK).derivations.keys())[0] == Attributes.DEF
 
 	def test_derivation_debug_history(self):

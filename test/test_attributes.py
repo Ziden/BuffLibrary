@@ -2,7 +2,7 @@
 from buffs.models import BuffableAttributes, Buffable, BuffSpec, Modifier, BuffCondition, BuffModification
 from buffs.buffspecs import register_buff
 
-from test.test_data.test_specs import (
+from test.test_data.specs import (
 	Attributes
 )
 

@@ -17,6 +17,9 @@ class SpecCache(object):
 _cache = SpecCache()
 
 
+def clear():
+    _cache.buff_specs = {}
+
 #################
 # SPEC HANDLING #
 #################

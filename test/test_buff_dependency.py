@@ -1,27 +1,17 @@
+import unittest
 import buffspecs
 
-from buffs.controller import call_event, add_buff
-from buffs.models import Buffable, BuffSpec, Modifier, BuffEvent
+from api import call_event, add_buff
+from models import Buffable, BuffSpec, Modifier, BuffEvent
+
 from test.test_data.buff_builder import BuffBuilder
-
-from test.test_data.test_specs import (
-	Attributes
-)
-
-import unittest
-
-
-class CompleteBuildingEvent(BuffEvent):
-	def __init__(self):
-		super(CompleteBuildingEvent, self).__init__(self)
-
-
-class DamageEvent(BuffEvent):
-	def __init__(self, buffable):
-		super(DamageEvent, self).__init__(buffable)
+from test.test_data.specs import Attributes, CompleteBuildingEvent, DamageEvent
 
 
 class Test_Buff_Dependency(unittest.TestCase):
+
+	def setUp(self):
+		buffspecs.clear()
 
 	def test_basic_buff_dependency(self):
 		buffable = Buffable()

@@ -1,86 +1,106 @@
 import buffspecs
 
+from models import *
+
 from test.test_data.buff_builder import BuffBuilder
+from test.test_data.specs import Castle, Player, Equipment, CompleteBuildingEvent
 
-from controller import call_event, add_buff, remove_buff
-from models import Buffable, BuffSpec, Modifier, BuffEvent, BuffModification, AddBuffEvent
+from api import call_event, add_buff, remove_buff
 
-
-from test.test_data.test_specs import (
+from test.test_data.specs import (
     Attributes
 )
 
 import unittest
+import random
 
+class Test_Buff_Propagation_With_Derivation(unittest.TestCase):
 
-class CompleteBuildingEvent(BuffEvent):
-    def __init__(self):
-        super(CompleteBuildingEvent, self).__init__(self)
-
-
-class RecruitPlayerEvent(BuffEvent):
-    def __init__(self, buffable):
-        super(RecruitPlayerEvent, self).__init__(buffable)
-
-
-class Castle(Buffable):
-    def __init__(self):
-        super(Castle, self).__init__()
-        self.players = []
-
-
-class Player(Buffable):
-    def __init__(self):
-        super(Player, self).__init__()
-        self.equipments = []
-        self.castle = None
-
-
-class Equipment(Buffable):
-    def __init__(self):
-        super(Equipment, self).__init__()
-        self.owner = None
-
-
-@buffspecs.AddPropagation(Castle, Player)
-def castle_to_player_propagation(player_castle):
-    return player_castle.players
-
-
-@buffspecs.AddPropagation(Equipment, Player)
-def equipment_to_player_propagation(equipment):
-    return [equipment.owner]
-
-
-class Test_Performance(unittest.TestCase):
+    def setUp(self):
+        buffspecs.clear()
 
     def test_performance(self):
-        player = Player()
 
-        player_buffs = []
-        initial_stat_value = 100
-        player_initial_stats = BuffSpec()
-        player_initial_stats.modifiers = [
-            Modifier("+", initial_stat_value, Attributes.ATK),
-            Modifier("+", initial_stat_value, Attributes.MAX_HP),
-            Modifier("+", initial_stat_value, Attributes.DEF),
-            Modifier("+", initial_stat_value, Attributes.CRIT_CHANCE),
-            Modifier("+", initial_stat_value, Attributes.CRIT_DAMAGE),
-            Modifier("+", initial_stat_value, Attributes.HP),
-        ]
-        player_buffs.append(player_initial_stats)
+        player1 = Player()
+        player1_equips = []
+        for i in range(10):
+          equip = Equipment()
+          equip.owner = player1
+          player1_equips.append(equip)
 
-        # 50% ATK to DEF
-        player_buffs.append(BuffBuilder().modify("%", 0.5, Attributes.ATK).to_attribute(Attributes.DEF).build())
-        # 250% bonus ATK
-        player_buffs.append(BuffBuilder().modify("%", 1.5, Attributes.ATK).build())
+        player2 = Player()
+        player2_equips = []
+        for i in range(10):
+          equip = Equipment()
+          equip.owner = player2
+          player2_equips.append(equip)
 
-        for buff in player_buffs:
-            add_buff(player, buff, CompleteBuildingEvent())
+        castle = Castle()
+        castle.players = [player1, player2]
 
-        # TODO: Finish this
+        seed = 1234
+
+        random.seed(seed)
+
+        buff_targets = {}
+
+        for i in range(10):
+
+            builder = BuffBuilder()
+            modifier = random_modifier()
+            builder.modify(*modifier)
+
+            propagates = False
+
+            apply_to, propagate_to = random_targets()
+
+            if chance_pct(25):
+                builder.to_attribute(random_attribute(exlude=modifier[2]))
+
+            if chance_pct(25):
+                propagates = True
+                builder.propagates_to_attribute(random_attribute())
+
+            #builder.propagates_to()
 
 
+def chance_pct(pct):
+    return pct >= random.randrange(0, 100)
+
+
+def random_targets():
+    possible_targets = [Player, Equipment, Castle]
+    apply_on = random.choice(possible_targets)
+
+    if apply_on == Player:
+        possible_targets = []
+
+    if apply_on == Castle:
+        possible_targets = [Player, Equipment]
+
+    if apply_on == Equipment:
+        possible_targets = [Player]
+
+    propagate_to = None
+    if possible_targets:
+        propagate_to = random.choice(possible_targets)
+    return apply_on, propagate_to
+
+def random_attribute(exlude=None):
+    attrs = list(Attributes)
+    if exlude:
+        attrs.remove(exlude)
+    return random.choice(attrs)
+
+
+def random_modifier():
+    op = "+"
+    attribute_id = random_attribute()
+    value = random.randrange(1, 150)
+    if bool(random.getrandbits(1)):
+        op = "%"
+        value = value / 100
+    return op, value, attribute_id
 
 
 

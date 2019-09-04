@@ -1,8 +1,9 @@
 import buffspecs
 
-from models import BuffModification, BuffPropagatedEvent
+from debug import strack_tracer
 
 
+@strack_tracer.Track
 def apply_attributes_modification(buffable_attributes, buff_modification):
     """ Applies a buff modification to attributes, calculating the final values.
     Also registers any derivations recieved (keeping track of the source)
@@ -11,7 +12,8 @@ def apply_attributes_modification(buffable_attributes, buff_modification):
     :param BuffModification buff_modification:
     :return:
     """
-    # First we apply the modifier or the modification, changing the attributes values
+
+    # First we apply the modifier of the modification, changing the attributes values
     to_apply_modifier = buff_modification.applied_modifier
     attribute_data = buffable_attributes.attribute_data[to_apply_modifier.attribute_id]
     _apply_modifier_to_attributes(buffable_attributes, to_apply_modifier)
@@ -29,6 +31,7 @@ def apply_attributes_modification(buffable_attributes, buff_modification):
     attribute_data.history[buff_modification.id] = buff_modification
 
 
+@strack_tracer.Track
 def remove_attribute_modification(buffable_attributes, buff_modification):
     """ Removes a buff modification from attributes, calculating the final attributes and updating any required
         derivated attributes.
@@ -47,24 +50,7 @@ def remove_attribute_modification(buffable_attributes, buff_modification):
     del attr_data.history[buff_modification.id]
 
 
-def _apply_modifier_to_attributes(buffable_attributes, modifier, inverse=False):
-    """ Applies a modifier to an attribute, calculating its final value.
-
-    :param BuffableAttributes buffable_attributes:
-    :param Modifier modifier:
-    :param bool inverse:
-    :rtype int
-    """
-    attr_data = buffable_attributes.attribute_data[modifier.attribute_id]
-    value = modifier.value if not inverse else -modifier.value
-    if modifier.operator == "+":
-        attr_data.mod_add += value
-    elif modifier.operator == "%":
-        attr_data.mod_mult += value
-    attr_data.calculate()
-    return attr_data.final_value
-
-
+@strack_tracer.Track
 def get_all_buff_modifications(buffable_attributes, buff_id):
     """ Gets all buff_modifications that buff is causing to attributes
 
@@ -85,3 +71,22 @@ def get_all_buff_modifications(buffable_attributes, buff_id):
             if buff_modification.buff_id == buff_id:
                 modifications.append(buff_modification)
     return modifications
+
+
+@strack_tracer.Track
+def _apply_modifier_to_attributes(buffable_attributes, modifier, inverse=False):
+    """ Applies a modifier to an attribute, calculating its final value.
+
+    :param BuffableAttributes buffable_attributes:
+    :param Modifier modifier:
+    :param bool inverse:
+    :rtype int
+    """
+    attr_data = buffable_attributes.attribute_data[modifier.attribute_id]
+    value = modifier.value if not inverse else -modifier.value
+    if modifier.operator == "+":
+        attr_data.mod_add += value
+    elif modifier.operator == "%":
+        attr_data.mod_mult += value
+    attr_data.calculate()
+    return attr_data.final_value

@@ -1,9 +1,8 @@
 from buffs.models import BuffableAttributes, Buffable, BuffSpec, Modifier, BuffCondition, BuffModification, BuffEvent
-from buffs.buffspecs import register_buff
 
-from controller import apply_attributes_modification
+from attributes import apply_attributes_modification
 
-from test.test_data.test_specs import (
+from test.test_data.specs import (
 	Attributes
 )
 
@@ -18,6 +17,10 @@ class BuildingCompleteEvent(BuffEvent):
 
 
 class Test_2_Modifiers(unittest.TestCase):
+
+	def setUp(self):
+		pass
+		# buffspecs.clear()
 
 	def test_apply_modifiers_not_cumulative(self):
 		buffable = Buffable()

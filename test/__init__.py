@@ -1,4 +1,0 @@
-
-"""
-poropagate enemy
-"""

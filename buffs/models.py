@@ -1,8 +1,10 @@
 from collections import defaultdict
 from utils.dict_magic import defaultdictlist
 import buffspecs
-from enum import Enum
 import uuid
+
+# Warm UUID generator
+uuid.uuid1()
 
 
 class Attribute(object):
@@ -11,6 +13,7 @@ class Attribute(object):
 		self.mod_mult = mod_mult
 		self.final_value = 0
 		self.history = {}
+		# We keep a map of derivations per attribute for performance boost
 		self.derivations = defaultdictlist()
 
 	def calculate(self):
@@ -31,12 +34,6 @@ class BuffableAttributes(object):
 
 	def get_data(self, attribute_id):
 		return self.attribute_data[attribute_id]
-
-
-class TriggerType(object):
-	ACTIVATION = 1
-	DEACTIVATION = 2
-	PROPAGATION = 3
 
 
 class BuffSpec(object):
@@ -66,6 +63,12 @@ class BuffSpec(object):
 
 		# Conditions that shall be met for the propagation to happen
 		self.propagation_conditions = []
+
+		# Amount of times the modifiers of this buff can stack
+		self.max_stack = 1
+
+		# How many seconds till this buff is removed
+		self.duration_seconds = -1
 
 		self.name = name
 		buffspecs.register_buff(self)
@@ -99,7 +102,7 @@ class BuffSpec(object):
 
 class BuffModification(object):
 	def __init__(self, modifier, source_event=None, buff_id=None, derivated_modifier=None):
-		self.id = uuid.uuid1()
+		self.id = uuid.uuid1() # 20ms to generate the first one :L
 		self.buff_id = buff_id
 		self.source_event = source_event
 
@@ -118,6 +121,7 @@ class ActiveBuff(object):
 	def __init__(self, buff_id, source_event):
 		self.source_event = source_event
 		self.buff_id = buff_id
+		self.stack = 1
 
 
 class BuffCondition(object):
@@ -126,17 +130,27 @@ class BuffCondition(object):
 		self.parameter = parameter
 
 
+
 class Buffable(object):
 	def __init__(self):
 		self.id = 0  # your game identification
 
-		self.attributes = BuffableAttributes()
+		self._attributes = BuffableAttributes()
 
 		self.active_buffs = {}
+
+		# Fifo list of tuples (expiry_time, buff_id)
+		self.expiry_times = []
 
 		self.activation_triggers = defaultdictlist()
 		self.deactivation_triggers = defaultdictlist()
 		self.propagation_triggers = defaultdictlist()
+
+	@property
+	def attributes(self):
+		# TODO: Solve this in a good way.
+		from buffable import get_attributes
+		return get_attributes(self)
 
 	@property
 	def name(self):
@@ -171,18 +185,29 @@ class BuffEvent(object):
 
 
 class _InternalChainEvent(BuffEvent):
+	""" Only to be used by the buff lib. This type of events keep track of the whole chain.
+	"""
 	def __init__(self, buffable, trigger_event):
 		super(_InternalChainEvent, self).__init__(buffable)
 		self.trigger_event = trigger_event
 
 
 class AddBuffEvent(_InternalChainEvent):
+	""" Whenever a buff is added """
 	def __init__(self, buffable, buff_id, trigger_event):
 		super(AddBuffEvent, self).__init__(buffable, trigger_event)
 		self.buff_id = buff_id
 
 
+class BuffExpiredEvent(_InternalChainEvent):
+	""" Whenever a buff is added """
+	def __init__(self, buffable, buff_id, trigger_event):
+		super(BuffExpiredEvent, self).__init__(buffable, trigger_event)
+		self.buff_id = buff_id
+
+
 class BuffPropagatedEvent(_InternalChainEvent):
+	""" Whenever a buff is propagated """
 	def __init__(self, buffable, source_buffable, buff_id, trigger_event):
 		super(BuffPropagatedEvent, self).__init__(buffable, trigger_event)
 		self.buff_id = buff_id

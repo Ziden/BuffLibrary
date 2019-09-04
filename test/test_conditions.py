@@ -1,10 +1,10 @@
 import buffspecs
 
-from buffs.controller import call_event, add_buff
+from buffs.api import call_event, add_buff
 from buffs.models import Buffable, BuffSpec, Modifier, BuffEvent
 from test.test_data.buff_builder import BuffBuilder
 
-from test.test_data.test_specs import (
+from test.test_data.specs import (
 	Attributes
 )
 
@@ -23,6 +23,9 @@ class DamageEvent(BuffEvent):
 
 
 class Test_4_Conditions(unittest.TestCase):
+
+	def setUp(self):
+		buffspecs.clear()
 
 	def test_basic_condition_failing(self):
 		buffable = Buffable()

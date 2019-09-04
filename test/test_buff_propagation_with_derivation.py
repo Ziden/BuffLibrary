@@ -2,56 +2,21 @@ import buffspecs
 
 from test.test_data.buff_builder import BuffBuilder
 
-from controller import call_event, add_buff, pull_propagated_buffs, remove_buff
+from api import call_event, add_buff, pull_propagated_buffs, remove_buff
 from models import Buffable, BuffSpec, Modifier, BuffEvent, BuffModification, BuffPropagatedEvent, AddBuffEvent
+from test.test_data.specs import Player, Equipment, CompleteBuildingEvent, Castle
 
-
-from test.test_data.test_specs import (
+from test.test_data.specs import (
 	Attributes
 )
 
 import unittest
 
 
-class CompleteBuildingEvent(BuffEvent):
-	def __init__(self):
-		super(CompleteBuildingEvent, self).__init__(self)
-
-
-class RecruitPlayerEvent(BuffEvent):
-	def __init__(self, buffable):
-		super(RecruitPlayerEvent, self).__init__(buffable)
-
-
-class Castle(Buffable):
-	def __init__(self):
-		super(Castle, self).__init__()
-		self.players = []
-
-
-class Player(Buffable):
-	def __init__(self):
-		super(Player, self).__init__()
-		self.castle = None
-
-
-class Equipment(Buffable):
-	def __init__(self):
-		super(Equipment, self).__init__()
-		self.owner = None
-
-
-@buffspecs.AddPropagation(Castle, Player)
-def castle_to_player_propagation(player_castle):
-	return player_castle.players
-
-
-@buffspecs.AddPropagation(Equipment, Player)
-def equipment_to_player_propagation(equipment):
-	return [equipment.owner]
-
-
 class Test_Buff_Propagation_With_Derivation(unittest.TestCase):
+
+	def setUp(self):
+		buffspecs.clear()
 
 	def test_propagating_a_derivation_buff(self):
 		player = Player()
@@ -117,3 +82,43 @@ class Test_Buff_Propagation_With_Derivation(unittest.TestCase):
 		# more 50% of the total attack that is 200 now should be propagated to player DEF
 		assert player.attributes[Attributes.DEF] == 100
 
+	def test_chain_derivation_with_propagation(self):
+		player = Player()
+		player.attributes[Attributes.ATK] = 50
+		player.attributes[Attributes.DEF] = 75
+
+		equipment = Equipment()
+		equipment.attributes[Attributes.ATK] = 100
+		equipment.owner = player
+
+		castle = Castle()
+		castle.attributes[Attributes.DEF] = 20
+		castle.players = [player]
+
+		# 50% of player def (75) becomes player HP
+		add_buff(equipment,
+				 BuffBuilder().modify("%", 0.5, Attributes.DEF).to_attribute(Attributes.HP) \
+				 .propagates_to(Player).build(),
+				 CompleteBuildingEvent()
+				 )
+
+		# 50% of equipment (100) attack goes to player DEF
+		add_buff(equipment,
+				 BuffBuilder().modify("%", 0.5, Attributes.ATK).propagates_to_attribute(Attributes.DEF) \
+				 .propagates_to(Player).build(),
+				 CompleteBuildingEvent()
+				 )
+
+		assert player.attributes[Attributes.DEF] == 125
+		assert player.attributes[Attributes.HP] == 125 / 2
+
+		# 25% of castle DEF becomes player DEF
+		add_buff(castle,
+				 BuffBuilder().modify("%", 0.5, Attributes.DEF).propagates_to_attribute(Attributes.DEF) \
+				 .propagates_to(Player).build(),
+				 CompleteBuildingEvent()
+				 )
+
+		assert castle.attributes[Attributes.DEF] == 20
+		assert player.attributes[Attributes.DEF] == 135
+		assert player.attributes[Attributes.HP] == 135 / 2
