@@ -3,12 +3,11 @@ import buffspecs
 from debug import strack_tracer
 
 
-@strack_tracer.Track
 def get_buff_specs_triggered_by_event(event, possible_trigger_list, condition_inverse=False, propagation=False):
     """ Obtains all triggered buffs by a given possible trigger list and conditions.
     The buffs are triggered from the newest to the oldest, and its a very important aspect
     of this function is that is a generator - because this allow the code to process the older buffs only after the
-    first one is processed, allowing buff dependency out of the box.
+    first one is processed to evaluate possible condition changes, allowing buff dependency out of the box.
 
     :param BuffEvent event:
     :param dict[str, list [ int ]] possible_trigger_list:  A dictionary of triggers to a list of buffs ids to trigger
@@ -16,7 +15,6 @@ def get_buff_specs_triggered_by_event(event, possible_trigger_list, condition_in
     :param bool propagation:
     :rtype: generator[BuffSpec]
     """
-    #list = []
     for buff_id in reversed(possible_trigger_list[event.get_name()]):
         buff_spec = buffspecs.get_buff_spec(buff_id)
         conditions = buff_spec.conditions if not propagation else buff_spec.propagation_conditions

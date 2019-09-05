@@ -54,22 +54,20 @@ def get_attributes(buffable):
     """
     for buff_spec in get_expired_buffs(buffable):
         inactivate_buff(buffable, buff_spec, None)
-        # If this buff has not activation triggers he should never be activated again
+
+        # If this buff has not activation triggers he should never be activated again if expired
         if not buff_spec.activation_triggers:
             delete_triggers(buff_spec.buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
 
     return buffable._attributes
 
 
-def increment_buff_stack(buffable, buff_spec):
-
+def has_reached_max_stacks(buffable, buff_spec):
     if buff_spec.buff_id in buffable.active_buffs:
         active_buff = buffable.active_buffs[buff_spec.buff_id]
         if active_buff.stack >= buff_spec.max_stack:
-            return False
-
-        active_buff.stack += 1
-    return True
+            return True
+    return False
 
 
 @strack_tracer.Track
@@ -82,10 +80,11 @@ def activate_buff(buffable, buff_spec, source_event):
     :rtype: list[ BuffModification ]
     """
     modifications = []
-    if not increment_buff_stack(buffable, buff_spec):
+    if has_reached_max_stacks(buffable, buff_spec):
         return modifications
 
     active_buff = buffable.active_buffs.get(buff_spec.buff_id) or ActiveBuff(buff_spec.buff_id, source_event)
+    active_buff.stack += 1
     buffable.active_buffs[buff_spec.buff_id] = active_buff
 
     # Remove the activation triggers because we just used em to activate this buff
@@ -125,8 +124,6 @@ def inactivate_buff(buffable, buff_spec, source_event):
     del buffable.active_buffs[buff_spec.buff_id]
     delete_triggers(buff_spec.buff_id, buff_spec.get_remove_triggers(), buffable.deactivation_triggers)
     copy_triggers(buff_spec.buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
-
-    # Removing Modifications and Recalculating Possible Affected Derivations
     return remove_all_buff_modifications(buffable, buff_spec)
 
 

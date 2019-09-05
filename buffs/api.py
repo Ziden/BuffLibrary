@@ -8,7 +8,7 @@ from models import AddBuffEvent, EventResult, BuffPropagatedEvent
 from events import get_buff_specs_triggered_by_event, handle_event_conditions
 from propagation import get_buff_propagation_events
 from buffable import (
-    activate_buff, inactivate_buff, remove_all_buff_modifications, increment_buff_stack
+    activate_buff, inactivate_buff, remove_all_buff_modifications, has_reached_max_stacks
 )
 
 
@@ -39,7 +39,9 @@ def call_event(event):
                 add_buff(propagation_event.buffable,buff_spec, propagation_event, propagated=True)
              )
             # In case this buff spec has no propagation triggers and was just propagated by "AddBuffEvent"
-            delete_triggers(propagation_event.buff_id, ["AddBuffEvent"], buffable.propagation_triggers)
+            # means this buff wont be able to re-propagate ever again.
+            if not buff_spec.propagation_triggers:
+                delete_triggers(propagation_event.buff_id, ["AddBuffEvent"], buffable.propagation_triggers)
 
     return result
 

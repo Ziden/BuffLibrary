@@ -1,4 +1,5 @@
 from functools import wraps
+import types
 
 from models import *
 
@@ -64,7 +65,14 @@ def stack_to_string(stack, level):
 
     function_str = ""
     if isinstance(stack.value, list):
-        function_str += "foreach x{} ".format(len(stack.value))
+        function_str += " [{}] ".format(len(stack.value))
+
+    if isinstance(stack.value, bool):
+        function_str += "[{}] ".format(str(stack.value))
+
+    if isinstance(stack.value, types.GeneratorType):
+        function_str += " [gen] "
+
     function_str += "{}(".format(stack.function_name)
     for arg in stack.args:
         if arg and isinstance(arg, (int, float, str)):

@@ -47,5 +47,5 @@ class Test_Function_Tracking(unittest.TestCase):
             assert root_calls[0].called[0].function_name == "quick_function"
             assert root_calls[0].called[1].function_name == "heavy_function"
 
-            track.print()
-
+            # TODO: Finish this test
+            # track.print_stack()

@@ -80,8 +80,9 @@ class Test_Buff_Propagation_With_Derivation(unittest.TestCase):
         assert player.attributes[Attributes.DEF] == 125 + 40 + 40
         assert player.attributes[Attributes.HP] == (125 + 40 + 40) / 2
 
-        # 50% of equipment attack goes to player DEF
-        # 50% of player def becomes player HP
+        # Just bumping player TK. To remember:
+        #   - 50% of equipment attack goes to player DEF
+        #   - 50% of player def becomes player HP
         add_buff(equipment,
                  BuffBuilder(6).modify("+", 100, Attributes.ATK).build(),
                  CompleteBuildingEvent()
@@ -91,13 +92,39 @@ class Test_Buff_Propagation_With_Derivation(unittest.TestCase):
         assert player.attributes[Attributes.DEF] == 125 + 40 + 40 + 50
         assert player.attributes[Attributes.HP] == (125 + 40 + 40 + 50) / 2
 
-        # TODO: Investigate unecessary propagation stacking
+        # 100% of castle DEF goes to player HP
+        add_buff(castle,
+                 BuffBuilder(7).modify("%", 1, Attributes.DEF).propagates_to_attribute(Attributes.HP)
+                 .propagates_to(Player).build(),
+                 CompleteBuildingEvent()
+                 )
+
+        assert castle.attributes[Attributes.DEF] == 80 + 80
+        assert player.attributes[Attributes.DEF] == 125 + 40 + 40 + 50
+        assert player.attributes[Attributes.HP] == ((125 + 40 + 40 + 50) / 2) + castle.attributes[Attributes.DEF]
+
+        add_buff(player,
+                 BuffBuilder(8).modify("%", 0.5, Attributes.HP).to_attribute(Attributes.CRIT_DAMAGE).build(),
+                 CompleteBuildingEvent()
+                 )
+
+        assert player.attributes[Attributes.HP] == ((125 + 40 + 40 + 50) / 2) + castle.attributes[Attributes.DEF]
+        assert player.attributes[Attributes.CRIT_DAMAGE] == player.attributes[Attributes.HP] / 2
+        assert castle.attributes[Attributes.DEF] == 80 + 80
+
         with TrackStack() as track:
+
             add_buff(castle,
-                     BuffBuilder(6).modify("%", 500, Attributes.DEF).propagates_to_attribute(Attributes.HP)
-                     .propagates_to(Player).build(),
-                     CompleteBuildingEvent()
-                     )
+                 BuffBuilder(2).modify("%", 0.5, Attributes.DEF).propagates_to_attribute(Attributes.DEF) \
+                 .propagates_to(Player).build(),
+                 CompleteBuildingEvent()
+            )
 
             track.print_stack()
+
+            assert False # Arruma saporra
+            assert player.attributes[Attributes.HP] == ((125 + 40 + 40 + 50) / 2) + castle.attributes[Attributes.DEF]
+            assert player.attributes[Attributes.CRIT_DAMAGE] == player.attributes[Attributes.HP] / 2
+            assert castle.attributes[Attributes.DEF] == 80 + 80
+
 

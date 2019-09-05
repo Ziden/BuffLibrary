@@ -121,7 +121,7 @@ class ActiveBuff(object):
 	def __init__(self, buff_id, source_event):
 		self.source_event = source_event
 		self.buff_id = buff_id
-		self.stack = 1
+		self.stack = 0
 
 
 class BuffCondition(object):
