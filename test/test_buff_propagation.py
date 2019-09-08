@@ -39,7 +39,6 @@ class Test_Buff_Propagation(unittest.TestCase):
 		# However even tho the castle has this buff as active, since its not a target it did not change ATK
 		assert castle.attributes[Attributes.ATK] == 0
 
-	"""
 	def test_propagation_also_modifyng_source(self):
 		player = Player()
 		player.attributes[Attributes.ATK] = 100
@@ -224,4 +223,3 @@ class Test_Buff_Propagation(unittest.TestCase):
 		# The propagation should have happened only once
 		assert len(player.active_buffs) == 1
 		assert player.attributes[Attributes.ATK] == 150
-	"""

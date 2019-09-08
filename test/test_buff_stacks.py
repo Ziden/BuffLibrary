@@ -58,7 +58,7 @@ class Test_3_Buffs(unittest.TestCase):
 		remove_buff(buffable, 1)
 		assert buffable.attributes[Attributes.DEF] == 0
 		assert buff.buff_id not in buffable.active_buffs
-		
+
 	def test_next_to_expire(self):
 		buffable = Buffable()
 
