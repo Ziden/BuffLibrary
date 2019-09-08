@@ -54,6 +54,13 @@ def get_propagation_source(event):
             return chain_event.source_buffable
 
 
+def get_propagation_target_buffables_including_self(buffable, buff_spec):
+    targets = list(get_propagation_target_buffables(buffable, buff_spec))
+    if buffable not in targets:
+        targets.append(buffable)
+    return targets
+
+
 @strack_tracer.Track
 def get_propagation_target_buffables(buffable, buff_spec):
     """ Get all possible targets of a propagation for a buff spec.

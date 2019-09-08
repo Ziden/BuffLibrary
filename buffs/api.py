@@ -6,7 +6,7 @@ from debug import strack_tracer
 from models import AddBuffEvent, EventResult, BuffPropagatedEvent
 
 from events import get_buff_specs_triggered_by_event, handle_event_conditions
-from propagation import get_buff_propagation_events
+from propagation import get_buff_propagation_events, get_propagation_target_buffables_including_self
 from buffable import (
     activate_buff, inactivate_buff, remove_all_buff_modifications, has_reached_max_stacks
 )
@@ -86,7 +86,8 @@ def remove_buff(buffable, buff_id):
         delete_triggers(buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
         delete_triggers(buff_id, buff_spec.get_propagation_triggers(), buffable.propagation_triggers)
         delete_triggers(buff_id, buff_spec.get_remove_triggers(), buffable.deactivation_triggers)
-        remove_all_buff_modifications(buffable, buff_spec)
+        for target in get_propagation_target_buffables_including_self(buffable, buff_spec):
+            remove_all_buff_modifications(target, buff_spec)
 
 
 @strack_tracer.Track

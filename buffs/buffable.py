@@ -4,7 +4,7 @@ import buffspecs
 from models import BuffModification, ActiveBuff
 from utils.arrays import delete_triggers, copy_triggers
 
-from propagation import get_propagation_source, get_propagation_target_buffables
+from propagation import get_propagation_source, get_propagation_target_buffables_including_self
 from attributes import get_all_buff_modifications, remove_attribute_modification, apply_attributes_modification
 from derivation import create_derivation_modifier, update_derivated_attributes
 from expiry import get_timestamp, register_expiry_time, get_expired_buffs
@@ -142,8 +142,10 @@ def inactivate_buff(buffable, buff_spec, source_event):
         stack_to_remove = buffable.active_buffs[buff_spec.buff_id].stack
         buffable.active_buffs[buff_spec.buff_id].stack -= 1
 
+    modifications_removed = []
     # Remove one stack of the buff, removing its modifications
-    modifications_removed = remove_all_buff_modifications(buffable, buff_spec, stack_to_remove)
+    for target in get_propagation_target_buffables_including_self(buffable, buff_spec):
+        modifications_removed += remove_all_buff_modifications(target, buff_spec, stack_to_remove)
 
     # In case there are no stacks left, buff becomes inactive
     if buffable.active_buffs[buff_spec.buff_id].stack == 0:
@@ -166,20 +168,15 @@ def remove_all_buff_modifications(buffable, buff_spec, specific_stack=None):
     :return:
     """
     modifications_removed = []
-    targets = list(get_propagation_target_buffables(buffable, buff_spec))
-    if buffable not in targets:
-        targets.append(buffable)
+    modifications_to_remove = get_all_buff_modifications(buffable.attributes, buff_spec.buff_id)
+    for modification in modifications_to_remove:
+        if specific_stack is None or modification.stack_count == specific_stack:
+            remove_attribute_modification(buffable.attributes, modification)
+            update_derivated_attributes(buffable, modification.applied_modifier.attribute_id)
+            modifications_removed.append(modification)
 
-    for target in targets:
-        modifications_to_remove = get_all_buff_modifications(target.attributes, buff_spec.buff_id)
-        for modification in modifications_to_remove:
-            if specific_stack is None or modification.stack_count == specific_stack:
-                remove_attribute_modification(target.attributes, modification)
-                update_derivated_attributes(target, modification.applied_modifier.attribute_id)
-                modifications_removed.append(modification)
-
-        #if specific_stack and modifications_to_remove and buff_spec.buff_id in target.active_buffs:
-        #    target.active_buffs[buff_spec.buff_id].stack -= 1
+    #if specific_stack and modifications_to_remove and buff_spec.buff_id in target.active_buffs:
+    #    target.active_buffs[buff_spec.buff_id].stack -= 1
 
     return modifications_removed
 
