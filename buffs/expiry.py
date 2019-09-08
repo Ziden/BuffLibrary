@@ -26,9 +26,11 @@ def get_expired_buffs(buffable):
     :param Buffable buffable:
     :rtype: generator[BuffSpec]
     """
+    expired_buffs = []
     while buffable.expiry_times and get_timestamp() >= _get_next_expiry_time(buffable):
         next_expiry_time, buff_id = buffable.expiry_times.pop(0)
-        yield buffspecs.get_buff_spec(buff_id)
+        expired_buffs.append(buffspecs.get_buff_spec(buff_id))
+    return expired_buffs
 
 
 def _get_next_expiry_time(buffable):
@@ -67,21 +69,26 @@ def get_timestamp():
     :return:  Current time in seconds
     :rtype: int
     """
-    if _mock_time:
-        return _mock_time[-1]
+    if _fixed_time:
+        return _fixed_time[-1]
     return time.time()
 
 
-_mock_time = []
+_fixed_time = []
 
 
-class MockTime(object):
+def clear_fixed_time():
+    _fixed_time.clear()
+
+
+class FixedTime(object):
     def __init__(self, time):
         self.time = time
 
     def __enter__(self):
-       _mock_time.append(self.time)
+        _fixed_time.clear()
+        _fixed_time.append(self.time)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-       _mock_time.remove(self.time)
+        _fixed_time.clear()
 

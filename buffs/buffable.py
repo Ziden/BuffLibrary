@@ -11,7 +11,7 @@ from expiry import get_timestamp, register_expiry_time, get_expired_buffs
 
 
 @strack_tracer.Track
-def create_buff_modifications(buffable, buff_id, source_event):
+def create_buff_modifications(buffable, buff_id, source_event, current_stack=1):
     """ Generates a list of buff modifications a buff will have to apply a buffable.
     Buff modifications are changes that can be applied to attributes as a whole.
     This list contains all changes that will update the buffable attributes.
@@ -19,6 +19,7 @@ def create_buff_modifications(buffable, buff_id, source_event):
     :param Buffable buffable:
     :param int buff_id:
     :param BuffEvent source_event:
+    :param int current-stack:
     :rtype: list[BuffModification]
     """
     modifications = []
@@ -41,6 +42,7 @@ def create_buff_modifications(buffable, buff_id, source_event):
                 source_buffable.attributes, modifier, buff_spec.propagates_to_attribute
             )
 
+        buff_modification.stack_count = current_stack
         modifications.append(buff_modification)
     return modifications
 
@@ -50,7 +52,7 @@ def get_attributes(buffable):
     """ Check if there is any expired buffs on this buffable, then return the attributes.
 
     :param Buffable buffable:
-    :return:
+    :rtype: BuffableAttributes
     """
     for buff_spec in get_expired_buffs(buffable):
         inactivate_buff(buffable, buff_spec, None)
@@ -63,6 +65,12 @@ def get_attributes(buffable):
 
 
 def has_reached_max_stacks(buffable, buff_spec):
+    """ Checks if a buff has reached max stack count.
+
+    :param Buffable buffable:
+    :param BuffSpec buff_spec:
+    :rtype: bool
+    """
     if buff_spec.buff_id in buffable.active_buffs:
         active_buff = buffable.active_buffs[buff_spec.buff_id]
         if active_buff.stack >= buff_spec.max_stack:
@@ -98,11 +106,11 @@ def activate_buff(buffable, buff_spec, source_event):
             # Copy the remove triggers so this buff could potentially be inactivated
             copy_triggers(buff_spec.buff_id, buff_spec.get_remove_triggers(), buffable.deactivation_triggers)
 
-            # Add an expiry time if needed
-            register_expiry_time(buffable, buff_spec)
+        # Add an expiry time if needed
+        register_expiry_time(buffable, buff_spec)
 
         # Create all modifications i need to apply to this buffable
-        modifications = create_buff_modifications(buffable, buff_spec.buff_id, source_event)
+        modifications = create_buff_modifications(buffable, buff_spec.buff_id, source_event, active_buff.stack)
 
         # Apply the modifications and update derivated attributes if we updating a source attribute of derivation
         for modification in modifications:
@@ -121,19 +129,36 @@ def inactivate_buff(buffable, buff_spec, source_event):
     :param BuffEvent source_event:
     :rtype: list[ BuffModification ]
     """
-    del buffable.active_buffs[buff_spec.buff_id]
-    delete_triggers(buff_spec.buff_id, buff_spec.get_remove_triggers(), buffable.deactivation_triggers)
-    copy_triggers(buff_spec.buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
-    return remove_all_buff_modifications(buffable, buff_spec)
+    stacks = buffable.active_buffs[buff_spec.buff_id].stack
+
+    # Remove one stack of the buff, removing its modifications
+    modifications_removed = remove_all_buff_modifications(buffable, buff_spec, stacks)
+    buffable.active_buffs[buff_spec.buff_id].stack -= 1
+
+    # In case there are no stacks left, buff becomes inactive
+    if buffable.active_buffs[buff_spec.buff_id].stack == 0:
+        del buffable.active_buffs[buff_spec.buff_id]
+        delete_triggers(buff_spec.buff_id, buff_spec.get_remove_triggers(), buffable.deactivation_triggers)
+        copy_triggers(buff_spec.buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
+
+    return modifications_removed
 
 
 @strack_tracer.Track
-def remove_all_buff_modifications(buffable, buff_spec):
+def remove_all_buff_modifications(buffable, buff_spec, specific_stack=None):
+    """ Removes all buff modifications a buff made. This takes into account propagations and derivations as well.
+
+    :param buffable:
+    :param buff_spec:
+    :param int specific_stack: When only removing one stack, what stack is being removed
+    :return:
+    """
     modifications_removed = []
     for target in get_propagation_target_buffables(buffable, buff_spec):
         for modification in get_all_buff_modifications(target.attributes, buff_spec.buff_id):
-            remove_attribute_modification(target.attributes, modification)
-            update_derivated_attributes(target, modification.applied_modifier.attribute_id)
-            modifications_removed.append(modification)
+            if not specific_stack or modification.stack_count == specific_stack:
+                remove_attribute_modification(target.attributes, modification)
+                update_derivated_attributes(target, modification.applied_modifier.attribute_id)
+                modifications_removed.append(modification)
     return modifications_removed
 

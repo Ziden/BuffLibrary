@@ -1,4 +1,6 @@
-from buffs.models import BuffableAttributes, Buffable, BuffSpec, Modifier, BuffCondition, BuffModification, BuffEvent
+from buffs.models import Buffable, Modifier, BuffModification
+
+from test.test_data.specs import CompleteBuildingEvent
 
 from attributes import apply_attributes_modification
 
@@ -7,13 +9,6 @@ from test.test_data.specs import (
 )
 
 import unittest
-
-
-# Example Event
-class BuildingCompleteEvent(BuffEvent):
-	def __init__(self, building_name):
-		super(BuildingCompleteEvent, self).__init__(self)
-		self.building_name = building_name
 
 
 class Test_2_Modifiers(unittest.TestCase):
@@ -42,8 +37,7 @@ class Test_2_Modifiers(unittest.TestCase):
 		attributes = buffable.attributes
 
 		# Create an event with fake event data
-		barracks = "barracks"
-		source_event = BuildingCompleteEvent(barracks)
+		source_event = CompleteBuildingEvent()
 
 		apply_attributes_modification(attributes, BuffModification(Modifier("+", 25, Attributes.ATK), source_event))
 		apply_attributes_modification(attributes, BuffModification(Modifier("%", 1.00, Attributes.ATK), source_event))
@@ -56,14 +50,14 @@ class Test_2_Modifiers(unittest.TestCase):
 		assert attribute_history[0].modifier.operator == "+"
 		assert attribute_history[0].modifier.value == 25
 		assert attribute_history[0].modifier.attribute_id == Attributes.ATK
-		assert attribute_history[0].source_event.building_name == source_event.building_name
+		assert attribute_history[0].source_event == source_event
 
 		assert attribute_history[1].modifier.operator == "%"
 		assert attribute_history[1].modifier.value == 1.00
 		assert attribute_history[1].modifier.attribute_id == Attributes.ATK
-		assert attribute_history[1].source_event.building_name == source_event.building_name
+		assert attribute_history[1].source_event == source_event
 
 		assert attribute_history[2].modifier.operator == "%"
 		assert attribute_history[2].modifier.value == 1.00
 		assert attribute_history[2].modifier.attribute_id == Attributes.ATK
-		assert attribute_history[2].source_event.building_name == source_event.building_name
+		assert attribute_history[2].source_event == source_event

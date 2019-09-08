@@ -63,7 +63,7 @@ def get_all_buff_modifications(buffable_attributes, buff_id):
     for modifier in buff.modifiers:
 
         # The changed attribute we looking for can be the derivated attribute or the modifier itself
-        # TODO: Make propagates_to_attribute works with to_attribute
+        # TODO: Make propagates_to_attribute works with to_attribute, could it be useful ?
         affected_attribute_id = buff.to_attribute or buff.propagates_to_attribute or modifier.attribute_id
 
         attr_data = buffable_attributes.attribute_data[affected_attribute_id]

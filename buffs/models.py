@@ -13,6 +13,7 @@ class Attribute(object):
 		self.mod_mult = mod_mult
 		self.final_value = 0
 		self.history = {}
+
 		# We keep a map of derivations per attribute for performance boost
 		self.derivations = defaultdictlist()
 
@@ -102,9 +103,12 @@ class BuffSpec(object):
 
 class BuffModification(object):
 	def __init__(self, modifier, source_event=None, buff_id=None, derivated_modifier=None):
-		self.id = uuid.uuid1() # 20ms to generate the first one :L
+		self.id = uuid.uuid1()
 		self.buff_id = buff_id
 		self.source_event = source_event
+
+		# If this modification is part of a stack, what stack is this ?
+		self.stack_count = 1
 
 		# Modifier configured in specs
 		self.modifier = modifier
