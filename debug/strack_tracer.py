@@ -12,7 +12,7 @@ This module is simply for help debugging. It allows to track function performanc
 """
 
 # TODO: Read env variable or config
-_tracking = True
+_tracking = False
 
 
 class FunctionTracker(object):
@@ -105,6 +105,10 @@ def stack_to_string(stack, level):
 
 
 def Track(func):
+
+    if not _tracking:
+        return func
+
     @wraps(func)
     def wrapper(*args, **kw):
         if not _tracking or not _tracker.context:

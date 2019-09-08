@@ -9,6 +9,8 @@ from attributes import get_all_buff_modifications, remove_attribute_modification
 from derivation import create_derivation_modifier, update_derivated_attributes
 from expiry import get_timestamp, register_expiry_time, get_expired_buffs
 
+from errors import BuffErrorCodes, BuffException
+
 
 @strack_tracer.Track
 def create_buff_modifications(buffable, buff_id, source_event, current_stack=1):
@@ -92,17 +94,17 @@ def activate_buff(buffable, buff_spec, source_event):
         return modifications
 
     active_buff = buffable.active_buffs.get(buff_spec.buff_id) or ActiveBuff(buff_spec.buff_id, source_event)
-    active_buff.stack += 1
     buffable.active_buffs[buff_spec.buff_id] = active_buff
 
     # Remove the activation triggers because we just used em to activate this buff
     delete_triggers(buff_spec.buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
 
+    active_buff.stack += 1
+
     if buff_spec.can_target(buffable.name):
 
         # Just in case this is the first stack
         if active_buff.stack == 1:
-
             # Copy the remove triggers so this buff could potentially be inactivated
             copy_triggers(buff_spec.buff_id, buff_spec.get_remove_triggers(), buffable.deactivation_triggers)
 
@@ -129,17 +131,27 @@ def inactivate_buff(buffable, buff_spec, source_event):
     :param BuffEvent source_event:
     :rtype: list[ BuffModification ]
     """
-    stacks = buffable.active_buffs[buff_spec.buff_id].stack
+
+    # If i got this buff propagated and this buff is inactivated, i remove all stacks
+    if buff_spec.propagates and buff_spec.can_target(buffable.name):
+        buffable.active_buffs[buff_spec.buff_id].stack = 0
+        stack_to_remove = None
+
+    # In case im the propagator or the owner of the buff, just reduce a stack and remove that stack modification
+    else:
+        stack_to_remove = buffable.active_buffs[buff_spec.buff_id].stack
+        buffable.active_buffs[buff_spec.buff_id].stack -= 1
 
     # Remove one stack of the buff, removing its modifications
-    modifications_removed = remove_all_buff_modifications(buffable, buff_spec, stacks)
-    buffable.active_buffs[buff_spec.buff_id].stack -= 1
+    modifications_removed = remove_all_buff_modifications(buffable, buff_spec, stack_to_remove)
 
     # In case there are no stacks left, buff becomes inactive
     if buffable.active_buffs[buff_spec.buff_id].stack == 0:
         del buffable.active_buffs[buff_spec.buff_id]
         delete_triggers(buff_spec.buff_id, buff_spec.get_remove_triggers(), buffable.deactivation_triggers)
-        copy_triggers(buff_spec.buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
+
+        if buff_spec.can_be_reactivated():
+            copy_triggers(buff_spec.buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
 
     return modifications_removed
 
@@ -154,11 +166,20 @@ def remove_all_buff_modifications(buffable, buff_spec, specific_stack=None):
     :return:
     """
     modifications_removed = []
-    for target in get_propagation_target_buffables(buffable, buff_spec):
-        for modification in get_all_buff_modifications(target.attributes, buff_spec.buff_id):
-            if not specific_stack or modification.stack_count == specific_stack:
+    targets = list(get_propagation_target_buffables(buffable, buff_spec))
+    if buffable not in targets:
+        targets.append(buffable)
+
+    for target in targets:
+        modifications_to_remove = get_all_buff_modifications(target.attributes, buff_spec.buff_id)
+        for modification in modifications_to_remove:
+            if specific_stack is None or modification.stack_count == specific_stack:
                 remove_attribute_modification(target.attributes, modification)
                 update_derivated_attributes(target, modification.applied_modifier.attribute_id)
                 modifications_removed.append(modification)
+
+        #if specific_stack and modifications_to_remove and buff_spec.buff_id in target.active_buffs:
+        #    target.active_buffs[buff_spec.buff_id].stack -= 1
+
     return modifications_removed
 

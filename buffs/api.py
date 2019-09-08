@@ -10,7 +10,7 @@ from propagation import get_buff_propagation_events
 from buffable import (
     activate_buff, inactivate_buff, remove_all_buff_modifications, has_reached_max_stacks
 )
-
+from errors import BuffException, BuffErrorCodes
 
 @strack_tracer.Track
 def call_event(event):
@@ -76,8 +76,12 @@ def remove_buff(buffable, buff_id):
     :param int buff_id:
     """
     if buff_id in buffable.active_buffs:
-        del buffable.active_buffs[buff_id]
 
+        buff_spec = buffspecs.get_buff_spec(buff_id)
+        if buffable.name in buff_spec.propagates_to:
+            raise BuffException(BuffErrorCodes.REMOVING_BUFF_NOT_FROM_SOURCE)
+
+        del buffable.active_buffs[buff_id]
         buff_spec = buffspecs.get_buff_spec(buff_id)
         delete_triggers(buff_id, buff_spec.get_triggers(), buffable.activation_triggers)
         delete_triggers(buff_id, buff_spec.get_propagation_triggers(), buffable.propagation_triggers)

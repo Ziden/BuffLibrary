@@ -31,6 +31,10 @@ class BuffBuilder():
         self.buff_spec.propagation_conditions.append(condition)
         return self
 
+    def stacks(self, stack):
+        self.buff_spec.max_stack = stack
+        return self
+
     def propagates_when(self, event_class):
         self.buff_spec.propagation_triggers.append(event_class.__name__)
         return self

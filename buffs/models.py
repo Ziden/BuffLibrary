@@ -82,6 +82,9 @@ class BuffSpec(object):
 	def auto_triggers(self):
 		return len(self.activation_triggers) == 0
 
+	def can_be_reactivated(self):
+		return (self.activation_triggers and self.conditions) or self.conditions or self.deactivation_triggers
+
 	def can_target(self, target_name):
 		return not self.propagates or target_name in self.propagates_to
 
