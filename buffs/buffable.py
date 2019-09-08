@@ -132,20 +132,17 @@ def inactivate_buff(buffable, buff_spec, source_event):
     :rtype: list[ BuffModification ]
     """
 
-    # If i got this buff propagated and this buff is inactivated, i remove all stacks
-    if buff_spec.propagates and buff_spec.can_target(buffable.name):
-        buffable.active_buffs[buff_spec.buff_id].stack = 0
-        stack_to_remove = None
+    only_remove_stack = None
 
-    # In case im the propagator or the owner of the buff, just reduce a stack and remove that stack modification
-    else:
-        stack_to_remove = buffable.active_buffs[buff_spec.buff_id].stack
-        buffable.active_buffs[buff_spec.buff_id].stack -= 1
+    # Code should only remove 1 stack if im the owner of the buff (propagates and im not a target)
+    if not buff_spec.propagates or not buff_spec.can_target(buffable.name):
+        only_remove_stack = buffable.active_buffs[buff_spec.buff_id].stack
 
     modifications_removed = []
-    # Remove one stack of the buff, removing its modifications
+    # Remove modifications this buff applies to self and propagated targets
     for target in get_propagation_target_buffables_including_self(buffable, buff_spec):
-        modifications_removed += remove_all_buff_modifications(target, buff_spec, stack_to_remove)
+        modifications_removed += remove_all_buff_modifications(target, buff_spec, only_remove_stack)
+        target.active_buffs[buff_spec.buff_id].stack -= 1
 
     # In case there are no stacks left, buff becomes inactive
     if buffable.active_buffs[buff_spec.buff_id].stack == 0:
@@ -174,9 +171,5 @@ def remove_all_buff_modifications(buffable, buff_spec, specific_stack=None):
             remove_attribute_modification(buffable.attributes, modification)
             update_derivated_attributes(buffable, modification.applied_modifier.attribute_id)
             modifications_removed.append(modification)
-
-    #if specific_stack and modifications_to_remove and buff_spec.buff_id in target.active_buffs:
-    #    target.active_buffs[buff_spec.buff_id].stack -= 1
-
     return modifications_removed
 
