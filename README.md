@@ -6,6 +6,10 @@ Buffs are commonly used in games as attribute modifiers, things that increase yo
 
 # Features
 
+## Additives and Multipliers
+
+Able to add both flat values and multipliers/percentages (IE +10 Attack or +10% Attack)
+
 ## Buff Propagation
 
 A player can have equipment that propagates modifications to the player actor.
