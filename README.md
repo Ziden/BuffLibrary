@@ -1,4 +1,4 @@
-# Buff Calculator
+# Game / RPG Buff Calculator
 
 Simple Python Project for simple buff calculations. 
 
