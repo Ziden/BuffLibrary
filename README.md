@@ -95,7 +95,7 @@ add_buff(castle, castle_buff)
 
 The propagation map can be registered by the developer.
 
-```
+```python
 @buffspecs.AddPropagation(Castle, Player)  
 def castle_to_player_propagation(player_castle):  
    return player_castle.players
