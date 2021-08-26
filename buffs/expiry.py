@@ -6,7 +6,6 @@ import time
 import sys
 
 
-@strack_tracer.Track
 def register_expiry_time(buffable, buff_spec):
     """ If this buff has an expiry time, register the expiry time on this buffable
 
@@ -19,7 +18,6 @@ def register_expiry_time(buffable, buff_spec):
         _add_expiry_time_to_fifo_list(buffable, expires_at, buff_spec.buff_id)
 
 
-@strack_tracer.Track
 def get_expired_buffs(buffable):
     """ Get a generator of all buffs that already have expired and removes them from the expiry list.
 
@@ -44,7 +42,6 @@ def _get_next_expiry_time(buffable):
         return buffable.expiry_times[0][0]
 
 
-@strack_tracer.Track
 def _add_expiry_time_to_fifo_list(buffable, expiry_time_to_add, buff_id_to_add):
     """ Adds an expiry time to the expiry time list. It will add lower expiry times earlier in order, so the
         first element is always the next to expire.

@@ -7,7 +7,6 @@ import buffspecs
 from propagation import get_propagated_targets_of_given_attribute, get_propagation_source
 
 
-@strack_tracer.Track
 def create_derivation_modifier(buffable_attributes, modifier, to_attribute_id):
     """ Creates a derivation modifier from another source modifier. This new modifier will have flat add attributes
     to the target attribute, where the value of that flat add is the result of the derivation of another attribute.
@@ -29,7 +28,6 @@ def create_derivation_modifier(buffable_attributes, modifier, to_attribute_id):
     return Modifier("+", derivated_bonus, to_attribute_id)
 
 
-@strack_tracer.Track
 def update_derivated_attributes(buffable, source_attribute_id):
     """ Updates derived attributes that depends on the given attribute that is changing.
 
@@ -45,7 +43,6 @@ def update_derivated_attributes(buffable, source_attribute_id):
         _recalculate_derivated_values_from_attribute(buffable_target, source_attribute_id)
 
 
-@strack_tracer.Track
 def _recalculate_derivated_values_from_attribute(buffable, source_attribute_id):
     """ For existing derivated modifications on the buffable that are based on the source attribute ID,
     Recalculate the derivation modifiers by removing and re-appliyng them, updating the derivated values.

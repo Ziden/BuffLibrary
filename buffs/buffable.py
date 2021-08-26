@@ -12,7 +12,6 @@ from expiry import get_timestamp, register_expiry_time, get_expired_buffs
 from errors import BuffErrorCodes, BuffException
 
 
-@strack_tracer.Track
 def create_buff_modifications(buffable, buff_id, source_event, current_stack=1):
     """ Generates a list of buff modifications a buff will have to apply a buffable.
     Buff modifications are changes that can be applied to attributes as a whole.
@@ -49,7 +48,6 @@ def create_buff_modifications(buffable, buff_id, source_event, current_stack=1):
     return modifications
 
 
-@strack_tracer.Track
 def get_attributes(buffable):
     """ Check if there is any expired buffs on this buffable, then return the attributes.
 
@@ -80,7 +78,6 @@ def has_reached_max_stacks(buffable, buff_spec):
     return False
 
 
-@strack_tracer.Track
 def activate_buff(buffable, buff_spec, source_event):
     """ Handles when a activation trigger is met - activating buffs from the buffable.
 
@@ -122,7 +119,6 @@ def activate_buff(buffable, buff_spec, source_event):
     return modifications
 
 
-@strack_tracer.Track
 def inactivate_buff(buffable, buff_spec, source_event):
     """ Handles when a inactivation trigger is met - inactivating buffs from the buffable.
 
@@ -155,7 +151,6 @@ def inactivate_buff(buffable, buff_spec, source_event):
     return modifications_removed
 
 
-@strack_tracer.Track
 def remove_all_buff_modifications(buffable, buff_spec, specific_stack=None):
     """ Removes all buff modifications a buff made. This takes into account propagations and derivations as well.
 

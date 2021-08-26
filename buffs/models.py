@@ -137,7 +137,6 @@ class BuffCondition(object):
 		self.parameter = parameter
 
 
-
 class Buffable(object):
 	def __init__(self):
 		self.id = 0  # your game identification

@@ -3,7 +3,6 @@ import buffspecs
 from debug import strack_tracer
 
 
-@strack_tracer.Track
 def apply_attributes_modification(buffable_attributes, buff_modification):
     """ Applies a buff modification to attributes, calculating the final values.
     Also registers any derivations recieved (keeping track of the source)
@@ -31,7 +30,6 @@ def apply_attributes_modification(buffable_attributes, buff_modification):
     attribute_data.history[buff_modification.id] = buff_modification
 
 
-@strack_tracer.Track
 def remove_attribute_modification(buffable_attributes, buff_modification):
     """ Removes a buff modification from attributes, calculating the final attributes and updating any required
         derivated attributes.
@@ -50,7 +48,6 @@ def remove_attribute_modification(buffable_attributes, buff_modification):
     del attr_data.history[buff_modification.id]
 
 
-@strack_tracer.Track
 def get_all_buff_modifications(buffable_attributes, buff_id):
     """ Gets all buff_modifications that buff is causing to attributes
 
@@ -73,7 +70,6 @@ def get_all_buff_modifications(buffable_attributes, buff_id):
     return modifications
 
 
-@strack_tracer.Track
 def _apply_modifier_to_attributes(buffable_attributes, modifier, inverse=False):
     """ Applies a modifier to an attribute, calculating its final value.
 

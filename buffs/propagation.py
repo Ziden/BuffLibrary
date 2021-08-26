@@ -4,7 +4,6 @@ from models import BuffPropagatedEvent
 import buffspecs
 
 
-@strack_tracer.Track
 def get_buff_propagation_events(buffable, buff_spec, source_event):
     """ Gets all propagations events that should happen for a specific buff.
 
@@ -18,7 +17,6 @@ def get_buff_propagation_events(buffable, buff_spec, source_event):
         yield BuffPropagatedEvent(target_buffable, buffable, buff_spec.buff_id, source_event)
 
 
-@strack_tracer.Track
 def get_propagated_targets_of_given_attribute(buffable, attribute_id):
     """ Obtain a lists of targets that are affected by a propagator attribute, for instance in a derivation.
 
@@ -42,7 +40,6 @@ def get_propagated_targets_of_given_attribute(buffable, attribute_id):
                         yield target
 
 
-@strack_tracer.Track
 def get_propagation_source(event):
     """ Obtain the buffable that caused a propagation event, if there is one.
 
@@ -61,7 +58,6 @@ def get_propagation_target_buffables_including_self(buffable, buff_spec):
     return targets
 
 
-@strack_tracer.Track
 def get_propagation_target_buffables(buffable, buff_spec):
     """ Get all possible targets of a propagation for a buff spec.
 

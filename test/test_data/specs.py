@@ -63,6 +63,7 @@ def equipment_to_player_propagation(equipment):
 # EVENTS #
 ##########
 
+
 class FartEvent(BuffEvent):
 	def __init__(self, buffable):
 		super(FartEvent, self).__init__(buffable)

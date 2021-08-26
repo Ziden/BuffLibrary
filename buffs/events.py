@@ -22,7 +22,6 @@ def get_buff_specs_triggered_by_event(event, possible_trigger_list, condition_in
             yield buff_spec
 
 
-@strack_tracer.Track
 def handle_event_conditions(event, conditions):
     """ Check if all conditions match for a given event.
 

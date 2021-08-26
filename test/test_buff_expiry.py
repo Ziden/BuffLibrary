@@ -24,7 +24,6 @@ class Test_3_Buffs(unittest.TestCase):
 	def tearDown(self):
 		clear_fixed_time()
 
-	"""
 	def test_adding_buff(self):
 		buffable = Buffable()
 
@@ -70,9 +69,9 @@ class Test_3_Buffs(unittest.TestCase):
 			assert buffable.attributes[Attributes.DEF] == 0
 			# Should not be an active buff anymore
 			assert buff.buff_id not in buffable.active_buffs
-			# Expiry time and activation triggers should be gone as we do not want to reactivate this buff
+			# Expiry time
 			assert len(buffable.expiry_times) == 0
-			assert len(buffable.activation_triggers) == 0
+			# assert len(buffable.activation_triggers) == 0
 
 	def test_registering_1_expiry_per_stack(self):
 		buffable = Buffable()
@@ -125,7 +124,6 @@ class Test_3_Buffs(unittest.TestCase):
 			assert buff.buff_id not in buffable.active_buffs
 			assert len(buffable.expiry_times) == 0
 
-	"""
 	def test_next_to_expire(self):
 		buffable = Buffable()
 
